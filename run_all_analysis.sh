@@ -29,8 +29,12 @@ Rscript 01_bednarik_simulation.R
 
 echo "Preprocessing data..."
 Rscript 02_preprocess_lb.R
+Rscript 03_lb_preproc_plot.R
 
-echo "Starting analysis..."
-Rscript 03_run_fitting.R
+echo "Starting fitting..."
+Rscript 04_run_fitting.R
+
+echo "Group analysis..."
+Rscript 05_run_fitting.R
 
 echo "Rscript finished :)"
