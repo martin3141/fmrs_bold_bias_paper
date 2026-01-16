@@ -2,6 +2,7 @@ library(spant)
 library(tidyverse)
 library(ggsignif)
 library(cowplot)
+library(tableHTML)
 
 theme_set(theme_bw())
 
@@ -20,13 +21,13 @@ proc_csv <- function(x) {
   return(res)
 }
 csv_list <- lapply(all_csvs, proc_csv)
-all_res <- do.call("rbind", csv_list)
+all_res  <- do.call("rbind", csv_list)
 
 # extract run info from file path
-split_sep <- str_split(all_res$path, pattern = .Platform$file.sep)
-all_res$run <- sapply(split_sep, \(x) x[3])
-protocol   <- sapply(split_sep, \(x) x[2])
-prot_split <- str_split(protocol, pattern = "_")
+split_sep     <- str_split(all_res$path, pattern = .Platform$file.sep)
+all_res$run   <- sapply(split_sep, \(x) x[3])
+protocol      <- sapply(split_sep, \(x) x[2])
+prot_split    <- str_split(protocol, pattern = "_")
 protocol_info <- do.call("rbind", prot_split)
 
 colnames(protocol_info) <- c("fit_method", "basis_type", "field_strength",
@@ -82,6 +83,7 @@ all_res$Glu_perc <- NA
 
 glu_perc_change    <- rep(NA, length = length(run_ids))
 glu_perc_change_sd <- rep(NA, length = length(run_ids))
+glu_perc_change_cd <- rep(NA, length = length(run_ids))
 for (n in 1:length(run_ids)) {
   id <- run_ids[n]
   av_rest <- mean(all_res[all_res$run_id == id & all_res$state == "REST",]$Glu)
@@ -90,22 +92,9 @@ for (n in 1:length(run_ids)) {
   task_set <- all_res$run_id == id & all_res$state == "TASK"
   glu_perc_change[n] <- round(mean(all_res[task_set,]$Glu_perc), 2)
   glu_perc_change_sd[n] <- round(sd(all_res[task_set,]$Glu_perc), 2)
+  glu_perc_change_cd[n] <- round(mean(all_res[task_set,]$Glu_perc) / 
+                                 sd(all_res[task_set,]$Glu_perc), 2)
 }
-
-table_1 <- cbind(table_1, "Mean Glu perc change" = glu_perc_change, 
-                 "Mean Glu perc change s.d." = glu_perc_change_sd)
-
-table_1 |> arrange(`Field strength`) |> arrange((`Analysis type`))
-
-mean_dyn_bias   <- table_1 |> filter(`Analysis type` == "dyn-basis") |>
-  pull(`Mean Glu perc change`) |> Mod() |> mean() 
-mean_static_bias <- table_1 |> filter(`Analysis type` == "static-basis") |>
-  pull(`Mean Glu perc change`) |> Mod() |> mean()
-mean_preproc_lb <- table_1 |> filter(`Analysis type` == "preproc-lb") |>
-  pull(`Mean Glu perc change`) |> Mod() |> mean()
-
-mean_static_bias / mean_dyn_bias    # ~9.0 fold bias reduction
-mean_static_bias / mean_preproc_lb  # ~9.5 fold bias reduction
 
 lcm_glu <- all_res |> filter(fit_method == "lcmodel") |>
   ggplot(aes(x = basis_type, y = Glu_perc)) +
@@ -122,18 +111,49 @@ abfit_glu <- all_res |> filter(fit_method == "abfit-reg") |>
   ggtitle("ABfit") + ylim(c(-6, 6.4))
 
 plot_grid(lcm_glu, abfit_glu, rel_widths = c(1, 1.2))
-
 ggsave("lcm_abfit_glu_bias.png", width = 11, height = 6)
+
+table_1 <- cbind(table_1, "Mean Glu perc change"  = glu_perc_change, 
+                 "Mean Glu perc change Cohen's d" = glu_perc_change_cd)
+
+fit_levels <- c("lcmodel", "abfit-reg")
+table_1$`Fit method` <- factor(table_1$`Fit method`, levels = fit_levels)
+
+analysis_levels <- c("static-basis", "preproc-lb", "dyn-basis")
+table_1$`Analysis type` <- factor(table_1$`Analysis type`,
+                                  levels = analysis_levels)
+
+# table_1 <- cbind(table_1, "Mean Glu perc change"  = glu_perc_change, 
+#                  "Mean Glu perc change s.d."      = glu_perc_change_sd,
+#                  "Mean Glu perc change Cohen's d" = glu_perc_change_cd)
+
+table_1 |> arrange(`Field strength`) |> arrange((`Analysis type`))
+
+mean_dyn_bias    <- table_1 |> filter(`Analysis type` == "dyn-basis") |>
+  pull(`Mean Glu perc change`) |> Mod() |> mean() 
+mean_static_bias <- table_1 |> filter(`Analysis type` == "static-basis") |>
+  pull(`Mean Glu perc change`) |> Mod() |> mean()
+mean_preproc_lb  <- table_1 |> filter(`Analysis type` == "preproc-lb") |>
+  pull(`Mean Glu perc change`) |> Mod() |> mean()
+
+mean_static_bias / mean_dyn_bias    # ~10.1 fold bias reduction
+mean_static_bias / mean_preproc_lb  # ~10.7 fold bias reduction
 
 # 5 block analysis
 
-table_1 |> filter(Blocks == "05-blocks") |> arrange(`Fit method`,
-                                                    `Analysis type`,
-                                                    `Field strength`)
+table_1 |> filter(Blocks == "05-blocks") |> 
+  arrange(`Fit method`, `Analysis type`, `Field strength`)
 
-table_2 <- table_1 |> filter(Blocks == "05-blocks") |> arrange(`Fit method`,
-                                                    `Analysis type`,
-                                                    `Field strength`)
+table_2 <- table_1 |> filter(Blocks == "05-blocks") |> 
+  arrange(`Fit method`, `Analysis type`, `Field strength`)
 
-library(tableHTML)
-write_tableHTML(tableHTML(table_2), file = 'table.html')
+levels(table_2$`Fit method`)    <- c("LCModel", "ABfit-reg")
+
+colnames(table_2)[2] <- "BOLD linewidth matching"
+
+levels(table_2$`BOLD linewidth matching`) <- c("none", "preprocessing",
+                                               "basis-set")
+
+table_2 <- table_2[-4]
+
+write_tableHTML(tableHTML(table_2), file = 'conventional_fitting_table.html')
