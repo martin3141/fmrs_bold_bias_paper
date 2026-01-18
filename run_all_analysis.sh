@@ -35,6 +35,6 @@ echo "Starting fitting..."
 Rscript 04_run_fitting.R
 
 echo "Group analysis..."
-Rscript 05_run_fitting.R
+Rscript 05_group_analysis.R
 
 echo "Rscript finished :)"
