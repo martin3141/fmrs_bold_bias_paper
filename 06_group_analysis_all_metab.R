@@ -228,14 +228,14 @@ sd_p <- all_res_perc_change_abf |> ggplot(aes(x = name, y = value)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   ylab("s.d. bias (%)") + xlab("") + theme(legend.title=element_blank())
 
-cohens_d <- function(x) mean(x) / sd(x)
+cohens_d <- function(x) Mod(mean(x)) / sd(x)
 
 # cd
 cd_p <- all_res_perc_change_abf |> ggplot(aes(x = name, y = value)) + 
   stat_summary(fun = cohens_d, aes(col = basis_type), geom = "point") + 
   facet_wrap(~ field_strength, ncol = 2) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  ylab("Cohen's d") + xlab("") + theme(legend.title=element_blank())
+  ylab("|Cohen's d|") + xlab("") + theme(legend.title=element_blank())
 
 plot_grid(mean_p, sd_p, cd_p, nrow = 3, labels = c("A", "B", "C"), align = "v")
 ggsave("abfit_metab_bias_cd.png", width = 8, height = 8)
@@ -275,13 +275,12 @@ sd_p <- all_res_perc_change_lcm |> ggplot(aes(x = name, y = value)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   ylab("s.d. bias (%)") + xlab("") + theme(legend.title=element_blank())
 
-cohens_d <- function(x) mean(x) / sd(x)
 # cd
 cd_p <- all_res_perc_change_lcm |> ggplot(aes(x = name, y = value)) + 
   stat_summary(fun = cohens_d, aes(col = basis_type), geom = "point") + 
   facet_wrap(~ field_strength, ncol = 2) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  ylab("Cohen's d") + xlab("") + theme(legend.title=element_blank())
+  ylab("|Cohen's d|") + xlab("") + theme(legend.title=element_blank())
 
 plot_grid(mean_p, sd_p, cd_p, nrow = 3, labels = c("A", "B", "C"), align = "v")
 ggsave("lcmodel_metab_bias_cd.png", width = 8, height = 8)

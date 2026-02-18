@@ -81,14 +81,14 @@ set.seed(1)
 n_subjects <- 128
 
 # 3T simulation
-sim_dataset(seq_tr = 2.5, N_scans = 640, bz_inhom_lb = 6, bold_lb_hz = 0.2,
-            ss_spec_snr = 45, subjects = n_subjects, ft = 123e6,
-            out_dir = file.path("simulated_data", "fmrs_bold_3T"))
+# sim_dataset(seq_tr = 2.5, N_scans = 640, bz_inhom_lb = 6, bold_lb_hz = 0.2,
+#             ss_spec_snr = 45, subjects = n_subjects, ft = 123e6,
+#             out_dir = file.path("simulated_data", "fmrs_bold_3T"))
 
 # 7T simulation
-sim_dataset(seq_tr = 5.0, N_scans = 320, bz_inhom_lb = 11, bold_lb_hz = 0.46,
-            ss_spec_snr = 80, subjects = n_subjects, ft = 297e6,
-            out_dir = file.path("simulated_data", "fmrs_bold_7T"))
+# sim_dataset(seq_tr = 5.0, N_scans = 320, bz_inhom_lb = 11, bold_lb_hz = 0.46,
+#             ss_spec_snr = 80, subjects = n_subjects, ft = 297e6,
+#             out_dir = file.path("simulated_data", "fmrs_bold_7T"))
 
 # example spectra plot
 path_3t <- file.path("simulated_data", "fmrs_bold_3T", "sub-001", "mrs",
@@ -128,4 +128,4 @@ bold_df |> ggplot(aes(x = time, y = lw, col = field_strength)) + geom_line() +
            ylab("Applied Lorentzian linebroadening (Hz)") + xlab("Time (s)") + 
            labs(color = "Field strength")
 
-ggsave("BOLD_LB.png", width = 6, height = 3)
+ggsave("BOLD_LB.png", width = 6, height = 3.5)
